@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ระบบค่าคอมมิชชั่นนายหน้า</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+:root{--bg:#f3f5fa;--tx:#1e293b;--mu:#64748b;--ln:#e2e8f0;--pri:#2563eb;--pri2:#1d4ed8;--pril:#eff6ff;--ok:#059669;--err:#dc2626;--r:14px}
+*{box-sizing:border-box}html,body{margin:0}
+body{font-family:'IBM Plex Sans Thai',system-ui,sans-serif;font-size:15.5px;line-height:1.6;color:var(--tx);background:var(--bg);-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.hidden{display:none!important}
+button,input,select,textarea{font:inherit;color:inherit}
+input,select,textarea{width:100%;padding:9px 12px;border:1px solid #cbd5e1;border-radius:10px;background:#fff;outline:none;transition:.15s}
+input:focus,select:focus,textarea:focus{border-color:var(--pri);box-shadow:0 0 0 3px #2563eb22}
+input:disabled,select:disabled{background:#f1f5f9;color:#64748b}
+input[type=checkbox]{width:18px;height:18px;accent-color:var(--pri);padding:0}
+label{display:block;font-size:14px;font-weight:500;color:#334155}
+label>input,label>select,label>textarea,label>.inline{margin-top:4px}
+a{color:var(--pri2)}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border:1px solid #cbd5e1;border-radius:10px;background:#fff;cursor:pointer;font-weight:500;white-space:nowrap;transition:.15s}
+.btn:hover{background:#f8fafc}.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn.pri{background:var(--pri);border-color:var(--pri);color:#fff}.btn.pri:hover{background:var(--pri2)}
+.btn.ok{background:var(--ok);border-color:var(--ok);color:#fff}
+.btn.danger{color:var(--err);border-color:#fecaca}
+.btn.sm{padding:5px 12px;font-size:14px}.btn.block{width:100%;justify-content:center;padding:12px}
+.login{min-height:100vh;display:grid;place-items:center;background:linear-gradient(135deg,#1e3a8a,#2563eb 60%,#60a5fa);padding:20px}
+.login-card{background:#fff;width:min(410px,100%);padding:36px 32px;border-radius:20px;box-shadow:0 20px 60px #0003;display:grid;gap:14px}
+.logo{width:56px;height:56px;border-radius:16px;background:var(--pril);color:var(--pri);display:grid;place-items:center;font-size:28px;font-weight:700}
+.login-card h1{margin:0;font-size:22px}.login-card p{margin:0}
+.warn{background:#fef3c7;color:#92400e;padding:10px 14px;border-radius:10px;font-size:14px;margin:10px 0}
+.app{display:flex;min-height:100vh}
+.side{width:250px;flex-shrink:0;background:#0f172a;color:#cbd5e1;display:flex;flex-direction:column;position:sticky;top:0;height:100vh}
+.brand{padding:22px 20px;font-weight:700;color:#fff;font-size:17px;line-height:1.35}
+.brand small{display:block;font-weight:400;color:#94a3b8;font-size:13px;margin-top:2px}
+nav{flex:1;padding:0 10px;overflow-y:auto}
+nav button{width:100%;display:flex;align-items:center;gap:10px;padding:10px 12px;border:0;background:none;color:#cbd5e1;border-radius:10px;cursor:pointer;text-align:left;margin-bottom:2px}
+nav button:hover{background:#1e293b;color:#fff}nav button.on{background:var(--pri);color:#fff}
+nav i{font-style:normal;width:20px;text-align:center}
+nav .cnt{margin-left:auto;background:#f59e0b;color:#111;font-size:12px;font-weight:700;padding:0 8px;border-radius:99px}
+.me{padding:14px 20px;border-top:1px solid #1e293b;font-size:14px}
+.me b{color:#fff;display:block}.me a{color:#93c5fd;cursor:pointer}
+.main{flex:1;min-width:0;padding:28px 32px 60px}
+.ph{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin-bottom:20px;flex-wrap:wrap}
+.ph h2{margin:0;font-size:24px}.ph p{margin:2px 0 0;color:var(--mu)}
+.card{background:#fff;border-radius:var(--r);box-shadow:0 1px 3px #0f172a14;padding:20px;margin-bottom:20px}
+.card h3{margin:0 0 12px;font-size:17px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:20px}
+.stat{background:#fff;border-radius:var(--r);padding:18px 20px;box-shadow:0 1px 3px #0f172a14;border-left:5px solid;cursor:pointer;transition:.15s}
+.stat:hover{transform:translateY(-2px);box-shadow:0 6px 16px #0f172a1a}
+.stat span{color:var(--mu);font-size:14px}.stat b{display:block;font-size:26px;margin:2px 0;font-variant-numeric:tabular-nums}.stat small{color:var(--mu)}
+.stat.gray{border-color:#94a3b8}.stat.amber{border-color:#f59e0b}.stat.blue{border-color:#3b82f6}.stat.purple{border-color:#8b5cf6}.stat.green{border-color:#10b981}
+.filters{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
+.filters>input,.filters>select{width:auto;min-width:170px}.filters>input.grow{flex:1;min-width:240px}
+.tw{overflow-x:auto}
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{background:#f8fafc;color:#475569;font-weight:600;font-size:14px;text-align:left;padding:10px 12px;border-bottom:1px solid var(--ln);white-space:nowrap}
+.tbl td{padding:10px 12px;border-bottom:1px solid #f1f5f9;vertical-align:middle}
+.tbl tr.click{cursor:pointer}.tbl tr.click:hover td{background:var(--pril)}
+.tbl tfoot td{font-weight:700;background:#f8fafc}
+.tbl.sm td,.tbl.sm th{padding:7px 10px}
+.tbl input{padding:6px 9px}.tbl input.cpu{width:110px;text-align:right}
+.tbl input.cpu.sug{background:#fef9c3;border-color:#facc15}
+.num{text-align:right!important;font-variant-numeric:tabular-nums;white-space:nowrap}
+.od{color:var(--err);font-weight:600}
+.badge{display:inline-block;padding:2px 10px;border-radius:99px;font-size:13px;font-weight:600;white-space:nowrap}
+.b-NEW,.b-new{background:#f1f5f9;color:#475569}.b-PENDING,.b-OPEN,.b-upd{background:#fef3c7;color:#92400e}.b-DUE{background:#dbeafe;color:#1e40af}
+.b-IN_PAYOUT,.b-WAITING{background:#ede9fe;color:#5b21b6}.b-PAID,.b-CLOSED{background:#d1fae5;color:#065f46}.b-NOCOMM,.b-CANCELLED,.b-skip{background:#f1f5f9;color:#94a3b8}
+.muted{color:var(--mu)}.hint{color:var(--mu);font-size:13.5px;margin:6px 0 0}
+.empty{text-align:center;color:var(--mu);padding:36px}
+.modal{position:fixed;inset:0;background:#0f172a80;display:grid;place-items:center;z-index:50;padding:20px}
+.modal-box{background:#fff;border-radius:18px;width:min(1000px,100%);max-height:92vh;display:flex;flex-direction:column;box-shadow:0 25px 60px #0004}
+.modal-head{display:flex;justify-content:space-between;align-items:center;padding:16px 24px;border-bottom:1px solid var(--ln)}
+.modal-head h3{margin:0;font-size:19px}
+.x{border:0;background:none;font-size:28px;cursor:pointer;color:var(--mu);line-height:1}
+.modal-body{padding:20px 24px;overflow-y:auto}
+.modal-foot{padding:14px 24px;border-top:1px solid var(--ln);display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
+.info{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;background:#f8fafc;border-radius:12px;padding:14px 16px;margin-bottom:16px}
+.info span{display:block;color:var(--mu);font-size:13px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;margin-bottom:16px}
+.inline{display:flex;gap:8px;align-items:center}
+.sec{margin-top:18px;padding-top:16px;border-top:1px dashed var(--ln)}.sec h4{margin:0 0 10px}
+.sum{background:var(--pril);border-radius:12px;padding:14px 18px;display:grid;gap:4px;max-width:380px;margin-left:auto}
+.sum div{display:flex;justify-content:space-between;gap:20px}
+.sum .net{font-size:20px;font-weight:700;color:var(--pri2);border-top:1px solid #bfdbfe;padding-top:6px;margin-top:4px}
+.drop{display:block;border:2px dashed #93c5fd;background:var(--pril);border-radius:14px;padding:30px;text-align:center;cursor:pointer;color:var(--pri2);font-weight:500}
+.drop input{display:none}
+.chk{display:inline-flex!important;align-items:center;gap:8px;font-weight:400;cursor:pointer}
+#toast{position:fixed;right:24px;bottom:24px;display:grid;gap:8px;z-index:99}
+.t{background:#0f172a;color:#fff;padding:12px 18px;border-radius:12px;box-shadow:0 8px 24px #0003;max-width:440px;animation:tin .2s}
+.t.err{background:#b91c1c}@keyframes tin{from{opacity:0;transform:translateY(8px)}}
+.spin{position:fixed;inset:0;background:#ffffff80;z-index:90;display:grid;place-items:center}
+.spin div{width:44px;height:44px;border:4px solid #bfdbfe;border-top-color:var(--pri);border-radius:50%;animation:sp .8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.rp{color:#111;font-size:14px}
+.rp-head{display:flex;justify-content:space-between;gap:20px;border-bottom:2px solid #111;padding-bottom:10px;margin-bottom:12px}
+.rp-head h2{margin:0;font-size:20px}.rp-no{text-align:right}
+.rp-to{display:grid;grid-template-columns:1fr 1fr;gap:4px 24px;margin-bottom:12px}
+.rp-to span{color:#555;margin-right:8px}
+.rp table{width:100%;border-collapse:collapse}
+.rp th,.rp td{border:1px solid #cbd5e1;padding:6px 8px;text-align:left}
+.rp th{background:#f1f5f9}.rp tr.sub td{color:#555;font-size:12.5px}
+.rp tfoot td{font-weight:600}.rp tr.grand td{font-size:16px;background:#eff6ff}
+.rp-paid{color:#065f46;font-weight:600}
+.sign{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;text-align:center;margin-top:50px}
+@media (max-width:900px){.app{flex-direction:column}.side{width:100%;height:auto;position:static}nav{display:flex;overflow-x:auto;padding:0 10px 10px}nav button{width:auto;white-space:nowrap}.main{padding:18px}}
+</style>
+</head>
+<body>
+
+<div id="login" class="login">
+  <div class="login-card">
+    <div class="logo">฿</div>
+    <div><h1>ระบบค่าคอมมิชชั่นนายหน้า</h1><p class="muted" id="companyName"></p></div>
+    <label>ชื่อของคุณ<input id="lName" placeholder="เช่น สมศรี"></label>
+    <label>รหัสผ่าน<input id="lPw" type="password" autocomplete="current-password"></label>
+    <button class="btn pri block" onclick="doLogin()">เข้าสู่ระบบ</button>
+    <p class="warn" id="demoNote"></p>
+  </div>
+</div>
+
+<div id="app" class="app hidden">
+  <aside class="side">
+    <div class="brand">ค่าคอมมิชชั่นนายหน้า<small id="brandCo"></small></div>
+    <nav id="nav"></nav>
+    <div class="me" id="me"></div>
+  </aside>
+  <main class="main" id="main"></main>
+</div>
+
+<div id="modal" class="modal hidden"><div class="modal-box">
+  <div class="modal-head"><h3 id="mTitle"></h3><button class="x" onclick="closeModal()">×</button></div>
+  <div class="modal-body" id="mBody"></div><div class="modal-foot" id="mFoot"></div>
+</div></div>
+<div id="toast"></div>
+<div id="spin" class="spin hidden"><div></div></div>
+
+<script>
+/* ========= ตั้งค่า ========= */
+const CONFIG = {
+  API_URL: '',                 // URL Web App ของ Apps Script (ลงท้าย /exec) — เว้นว่าง = โหมดทดลอง
+  COMPANY: 'บริษัท ของคุณ จำกัด',
+  DEFAULT_WHT: 5,              // อัตราหัก ณ ที่จ่ายเริ่มต้น (%)
+  NO_COMM_CODES: []            // รหัสพนักงานขายใน Autoflight ที่ไม่มีค่าคอม เช่น ['00-VPACK']
+};
+const DEMO = !CONFIG.API_URL;
+
+/* ========= ค่าคงที่ ========= */
+const TABLES = ['Brokers','Invoices','Lines','Adjustments','Payouts'];
+const KEYS = {Brokers:'id',Invoices:'invoiceNo',Lines:'lineId',Adjustments:'adjId',Payouts:'payoutId'};
+const ST = {NEW:'รอระบุค่าคอม',PENDING:'รอรับชำระ',DUE:'ค้างจ่ายค่าคอม',IN_PAYOUT:'รอโอน',PAID:'ปิดงานแล้ว',NOCOMM:'ไม่มีค่าคอม',
+            WAITING:'รอโอน',CLOSED:'ปิดงานแล้ว',CANCELLED:'ยกเลิก',OPEN:'รอหักในรอบจ่าย',new:'บิลใหม่',upd:'อัปเดต',skip:'ข้าม (ทำแล้ว)'};
+const TH_M = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+const NAV = [['dash','ภาพรวม','◎'],['import','นำเข้าจาก Autoflight','⇪'],['inv','ใบกำกับ / ระบุค่าคอม','▤'],['rcpt','บันทึกรับชำระ','✓'],
+             ['pay','รอบจ่ายค่าคอม','฿'],['adj','ลดหนี้ / ปรับปรุง','↺'],['brk','นายหน้า','☺'],['log','ประวัติการแก้ไข','☰']];
+let S = {token:null,user:null,db:{},page:'dash',f:{}};
+let IMP = null;
+
+/* ========= ตัวช่วย ========= */
+const $ = s => document.querySelector(s);
+const $ = s => [...document.querySelectorAll(s)];
+const num = v => { const n = parseFloat(String(v ?? '').replace(/[, ]/g,'')); return isNaN(n) ? 0 : n; };
+const r2 = n => Math.round((n + Number.EPSILON) * 100) / 100;
+const money = n => num(n).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
+const rate = n => num(n).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:4});
+const qtyf = n => num(n).toLocaleString('th-TH',{maximumFractionDigits:3});
+const esc = s => String(s ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const q = s => esc(String(s ?? '').replace(/\\/g,'\\\\').replace(/'/g,"\\'"));
+const pad = x => String(x).padStart(2,'0');
+const today = () => { const d = new Date(); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; };
+const nowStr = () => { const d = new Date(); return `${today()} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`; };
+const thDateRaw = s => { const m = String(s||'').match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? `${m[3]}/${m[2]}/${+m[1]+543}` : String(s||''); };
+const thDate = s => esc(thDateRaw(s)) || '-';
+const badge = st => `<span class="badge b-${esc(st)}">${ST[st]||esc(st)}</span>`;
+const brokerOf = id => S.db.Brokers.find(b => b.id === id);
+const bName = id => esc((brokerOf(id)||{}).name || '—');
+const linesOf = no => S.db.Lines.filter(l => l.invoiceNo === no).sort((a,b) => num(a.seq)-num(b.seq));
+const sumBy = (arr,f) => r2(arr.reduce((s,x) => s + num(typeof f === 'function' ? f(x) : x[f]), 0));
+const whtOf = b => (b && b.whtRate !== '' && b.whtRate != null) ? num(b.whtRate) : CONFIG.DEFAULT_WHT;
+const days = (a,b) => Math.round((new Date(b+'T00:00:00') - new Date(a+'T00:00:00')) / 864e5);
+const creditTxt = i => { if (!i.dueDate || !i.invoiceDate) return ''; const d = days(i.invoiceDate, i.dueDate); return d <= 0 ? 'เงินสด' : `เครดิต ${d} วัน`; };
+const isNoComm = c => CONFIG.NO_COMM_CODES.map(x => x.toLowerCase()).includes(String(c||'').toLowerCase());
+const periodDefault = () => { const d = new Date(); return `งวด ${TH_M[d.getMonth()]} ${d.getFullYear()+543}`; };
+const head = (t,s,act='') => `<div class="ph"><div><h2>${t}</h2><p>${s}</p></div><div class="inline">${act}<button class="btn" onclick="refresh()">↻ รีเฟรช</button></div></div>`;
+function salesMap(){ const m = {}; S.db.Brokers.forEach(b => String(b.salesCode||'').split(/[,\s]+/).filter(Boolean).forEach(c => m[c.toLowerCase()] = b.id)); return m; }
+function brokerOptions(sel, all){
+  return (all !== undefined ? `<option value="">${all}</option>` : '') +
+    S.db.Brokers.filter(b => String(b.active).toUpperCase() !== 'FALSE' || b.id === sel)
+      .sort((a,b) => String(a.name).localeCompare(String(b.name),'th'))
+      .map(b => `<option value="${esc(b.id)}" ${b.id===sel?'selected':''}>${esc(b.name)}</option>`).join('');
+}
+function genPid(k){ const d = new Date(); return `PAY-${d.getFullYear()+543}${pad(d.getMonth()+1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}${k?'-'+k:''}`; }
+function toast(m,type=''){ const d=document.createElement('div'); d.className='t '+type; d.textContent=m; $('#toast').appendChild(d); setTimeout(()=>d.remove(), type==='err'?6000:3000); }
+function openModal(title, body, foot){ $('#mTitle').textContent=title; $('#mBody').innerHTML=body; $('#mFoot').innerHTML=foot||'<button class="btn" onclick="closeModal()">ปิด</button>'; $('#modal').classList.remove('hidden'); }
+function closeModal(){ $('#modal').classList.add('hidden'); }
+async function busy(fn){ $('#spin').classList.remove('hidden'); try { return await fn(); } catch(e){ toast(e.message||String(e),'err'); } finally { $('#spin').classList.add('hidden'); } }
+function printDoc(title, html){
+  const w = window.open('','_blank'); if (!w) return toast('เบราว์เซอร์บล็อกหน้าต่างใหม่ กรุณาอนุญาต pop-up','err');
+  w.document.write(`<!DOCTYPE html><html lang="th"><head><meta charset="utf-8"><title>${esc(title)}</title><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;600;700&display=swap" rel="stylesheet">${document.querySelector('style').outerHTML}<style>body{background:#fff;padding:10px}@page{size:A4;margin:12mm}</style></head><body>${html}</body></html>`);
+  w.document.close(); setTimeout(() => { w.focus(); w.print(); }, 900);
+}
+
+/* ========= เชื่อมต่อข้อมูล ========= */
+async function api(action, payload={}){
+  if (DEMO) return demoApi(action, payload);
+  const res = await fetch(CONFIG.API_URL, {method:'POST', body: JSON.stringify({action, token:S.token, ...payload})});
+  const j = await res.json();
+  if (!j.ok){
+    if (j.error === 'SESSION_EXPIRED'){ toast('หมดเวลาการใช้งาน กรุณาเข้าสู่ระบบใหม่','err'); setTimeout(logout,1500); }
+    throw new Error(j.error);
+  }
+  return j.data;
+}
+async function batch(ops){
+  const res = await api('batch',{ops});
+  const rej = new Set(res.rejected || []);
+  ops.forEach(op => {
+    const t = op.table, k = KEYS[t];
+    if (op.del && op.del.length){ const s = new Set(op.del); S.db[t] = S.db[t].filter(x => !s.has(x[k])); }
+    (op.rows||[]).forEach(r => {
+      if (rej.has(t+':'+r[k])) return;
+      const row = {...r, updatedBy:S.user.displayName};
+      const i = S.db[t].findIndex(x => x[k] === r[k]);
+      if (i >= 0) Object.assign(S.db[t][i], row); else S.db[t].push(row);
+    });
+  });
+  if (rej.size) toast('รายการที่ปิดงานแล้วถูกล็อก ไม่ได้บันทึก: '+[...rej].map(x=>x.split(':')[1]).join(', '),'err');
+  return res;
+}
+async function reload(){ const d = await api('getAll'); TABLES.concat('Log').forEach(t => S.db[t] = d[t] || []); }
+async function refresh(){ await busy(async()=>{ await reload(); render(); toast('อัปเดตข้อมูลล่าสุดแล้ว'); }); }
+
+/* โหมดทดลอง: เก็บข้อมูลในเบราว์เซอร์ */
+async function demoApi(action, p){
+  await new Promise(r => setTimeout(r,120));
+  const db = JSON.parse(localStorage.getItem('commDemo2') || '{}'); TABLES.forEach(t => db[t] = db[t] || []);
+  const persist = () => localStorage.setItem('commDemo2', JSON.stringify(db));
+  if (action === 'login'){ if (!p.name) throw new Error('กรุณาใส่ชื่อของคุณ'); return {token:'demo', user:{displayName:p.name}}; }
+  if (action === 'getAll'){
+    if (!db.Brokers.length){
+      db.Brokers = [{id:'BR1',name:'คุณอนันต์ (ตัวอย่าง)',salesCode:'02-ANAN',bank:'กสิกรไทย',accountNo:'123-4-56789-0',accountName:'อนันต์',whtRate:5,active:'TRUE'},
+                    {id:'BR2',name:'คุณจุติมา (ตัวอย่าง)',salesCode:'07-JUTIMA',bank:'ไทยพาณิชย์',accountNo:'987-6-54321-0',accountName:'จุติมา',whtRate:5,active:'TRUE'}];
+      persist();
+    }
+    return {...db, Log:[]};
+  }
+  if (action === 'batch'){
+    p.ops.forEach(op => { const k = KEYS[op.table];
+      if (op.del && op.del.length){ const s = new Set(op.del); db[op.table] = db[op.table].filter(x => !s.has(x[k])); }
+      (op.rows||[]).forEach(r => { const i = db[op.table].findIndex(x => x[k] === r[k]); if (i >= 0) Object.assign(db[op.table][i], r); else db[op.table].push({...r}); });
+    });
+    persist(); return {rejected:[]};
+  }
+  return {};
+}
+
+/* ========= เข้าสู่ระบบ ========= */
+async function doLogin(){
+  const name = $('#lName').value.trim();
+  if (!name) return toast('กรุณาใส่ชื่อของคุณ','err');
+  localStorage.setItem('commName', name);
+  await busy(async()=>{
+    const r = await api('login',{name, password:$('#lPw').value});
+    S.token = r.token; S.user = r.user;
+    sessionStorage.setItem('commSess', JSON.stringify({token:r.token,user:r.user}));
+    await reload(); showApp();
+  });
+}
+function logout(){ sessionStorage.removeItem('commSess'); location.reload(); }
+function showApp(){
+  $('#login').classList.add('hidden'); $('#app').classList.remove('hidden');
+  $('#me').innerHTML = `<b>${esc(S.user.displayName)}</b><a onclick="logout()">ออกจากระบบ</a>`;
+  render();
+}
+
+/* ========= Render ========= */
+const PAGES = {dash:pgDash, import:pgImport, inv:pgInv, rcpt:pgRcpt, pay:pgPay, adj:pgAdj, brk:pgBrk, log:pgLog};
+const AFTER = {inv:renderInvTable, rcpt:renderRcpt, pay:renderPayList, import:()=>{ if (IMP) renderImp(); }};
+function go(p){ S.page = p; render(); window.scrollTo(0,0); }
+function navCount(p){
+  const I = S.db.Invoices;
+  const n = p==='inv' ? I.filter(i=>i.status==='NEW').length : p==='rcpt' ? I.filter(i=>i.status==='PENDING').length : p==='pay' ? I.filter(i=>i.status==='DUE').length : 0;
+  return n ? `<span class="cnt">${n}</span>` : '';
+}
+function render(){
+  $('#nav').innerHTML = NAV.map(n => `<button class="${S.page===n[0]?'on':''}" onclick="go('${n[0]}')"><i>${n[2]}</i>${n[1]}${navCount(n[0])}</button>`).join('');
+  $('#main').innerHTML = PAGES[S.page]();
+  if (AFTER[S.page]) AFTER[S.page]();
+}
+
+/* ========= ภาพรวม ========= */
+function pgDash(){
+  const I = S.db.Invoices, by = st => I.filter(i => i.status === st);
+  const openAdj = S.db.Adjustments.filter(a => a.status === 'OPEN');
+  const waiting = S.db.Payouts.filter(p => p.status === 'WAITING');
+  const ym = today().slice(0,7), yr = today().slice(0,4);
+  const paidM = S.db.Payouts.filter(p => p.status === 'CLOSED' && String(p.transferDate).startsWith(ym));
+  const cards = [
+    ['รอระบุค่าคอม', by('NEW').length+' บิล','ยังไม่ได้ระบุค่าคอม','gray','inv'],
+    ['รอรับชำระ (พักไว้)', money(sumBy(by('PENDING'),'commTotal')), by('PENDING').length+' บิล','amber','rcpt'],
+    ['ค้างจ่ายค่าคอม', money(r2(sumBy(by('DUE'),'commTotal')+sumBy(openAdj,'commAmount'))), by('DUE').length+' บิล · ลูกค้าชำระแล้ว','blue','pay'],
+    ['รอโอน (สุทธิ)', money(sumBy(waiting,'net')), waiting.length+' รอบจ่าย','purple','pay'],
+    ['โอนแล้วเดือนนี้', money(sumBy(paidM,'net')), paidM.length+' รอบจ่าย','green','pay']
+  ];
+  const rows = S.db.Brokers.map(b => {
+    const mine = I.filter(i => i.brokerId === b.id);
+    return {b, pend:sumBy(mine.filter(i=>i.status==='PENDING'),'commTotal'),
+      due:r2(sumBy(mine.filter(i=>i.status==='DUE'),'commTotal')+sumBy(openAdj.filter(a=>a.brokerId===b.id),'commAmount')),
+      wait:sumBy(waiting.filter(p=>p.brokerId===b.id),'net'),
+      paid:sumBy(S.db.Payouts.filter(p=>p.brokerId===b.id&&p.status==='CLOSED'&&String(p.transferDate).startsWith(yr)),'net')};
+  }).filter(r => r.pend || r.due || r.wait || r.paid);
+  const first = !I.length ? `<div class="card" style="border-left:5px solid var(--pri)"><h3>เริ่มต้นใช้งาน</h3>
+    <ol style="margin:0;padding-left:20px"><li>เพิ่ม <a href="#" onclick="go('brk')">นายหน้า</a> พร้อม <b>รหัสพนักงานขายใน Autoflight</b> บัญชีธนาคาร และอัตราหัก ณ ที่จ่าย</li>
+    <li>ส่งออกรายงานจาก Autoflight เป็น <b>CSV Excel</b> แล้ว <a href="#" onclick="go('import')">นำเข้า</a></li>
+    <li>เปิดแต่ละบิล ใส่ค่าคอมต่อชิ้น</li><li>เมื่อลูกค้าชำระ ใส่เลขที่ใบเสร็จ → สิ้นเดือนสร้างรอบจ่าย → โอน → ปิดงาน</li></ol></div>` : '';
+  return head('ภาพรวม', 'สรุปสถานะค่าคอมมิชชั่นทั้งหมด') + first +
+    `<div class="stats">${cards.map(c=>`<div class="stat ${c[3]}" onclick="go('${c[4]}')"><span>${c[0]}</span><b>${c[1]}</b><small>${c[2]}</small></div>`).join('')}</div>
+    <div class="card"><h3>แยกตามนายหน้า</h3>${rows.length ? `<div class="tw"><table class="tbl"><thead><tr><th>นายหน้า</th><th class="num">รอรับชำระ (พักไว้)</th><th class="num">ค้างจ่าย</th><th class="num">รอโอน (สุทธิ)</th><th class="num">โอนแล้วปีนี้ (สุทธิ)</th></tr></thead>
+    <tbody>${rows.map(r=>`<tr><td><b>${esc(r.b.name)}</b></td><td class="num">${money(r.pend)}</td><td class="num">${money(r.due)}</td><td class="num">${money(r.wait)}</td><td class="num">${money(r.paid)}</td></tr>`).join('')}</tbody>
+    <tfoot><tr><td>รวม</td><td class="num">${money(sumBy(rows,'pend'))}</td><td class="num">${money(sumBy(rows,'due'))}</td><td class="num">${money(sumBy(rows,'wait'))}</td><td class="num">${money(sumBy(rows,'paid'))}</td></tr></tfoot></table></div>` : '<div class="empty">ยังไม่มีข้อมูล</div>'}</div>`;
+}
+
+/* ========= นำเข้าจาก Autoflight (CSV Excel) ========= */
+function pgImport(){
+  return head('นำเข้าข้อมูลจาก Autoflight','ใน Autoflight ติ๊ก “ออกเป็นไฟล์” เลือกชนิด CSV Excel แล้วอัปโหลดไฟล์ที่ได้ที่นี่ ไม่ต้องแปลงอะไร') +
+  `<div class="card"><label class="drop"><input type="file" accept=".csv" onchange="readFile(this.files[0]);this.value=''">คลิกเพื่อเลือกไฟล์ .CSV จาก Autoflight</label>
+   <p class="hint">นำเข้าซ้ำหรือช่วงวันที่ทับกันได้ ระบบจะไม่ทับบิลที่ระบุค่าคอมไปแล้ว${DEMO?' · โหมดทดลอง: <a href="#" onclick="demoData();return false">ใช้ข้อมูลตัวอย่าง</a>':''}</p>
+   <div id="impArea"></div></div>`;
+}
+function parseDate(v){
+  const s = String(v ?? '').trim(); if (!/\d/.test(s)) return '';
+  const iso = (y,m,d) => `${y}-${pad(m)}-${pad(d)}`;
+  let m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/); if (m){ let y=+m[1]; if (y>2400) y-=543; return iso(y,+m[2],+m[3]); }
+  m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})/); if (m){ let y=+m[3]; if (y<100) y+=2000; if (y>2400) y-=543; return iso(y,+m[2],+m[1]); }
+  return '';
+}
+async function readFile(file){
+  if (!file) return;
+  if (!/\.csv$/i.test(file.name)) return toast('กรุณาใช้ไฟล์ชนิด CSV Excel (ไฟล์ XLS จาก Autoflight ภาษาไทยและวันที่จะเพี้ยน)','err');
+  await busy(async()=>{
+    const buf = await file.arrayBuffer(); let text;
+    try { text = new TextDecoder('utf-8',{fatal:true}).decode(buf); } catch(e){ text = new TextDecoder('windows-874').decode(buf); }
+    const wb = XLSX.read(text.replace(/^\uFEFF/,''),{type:'string',raw:true});
+    const raw = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{raw:true,defval:''});
+    const rows = raw.map(r => { const o = {}; for (const k in r) o[k.trim().toLowerCase()] = r[k]; return o; });
+    if (!rows.length || !('subhdlevel' in rows[0]) || !('no' in rows[0]) || !('qty' in rows[0])) throw new Error('ไฟล์นี้ไม่ใช่รูปแบบรายงานที่รองรับ (ต้องมีคอลัมน์ no, qty, subhdlevel)');
+    const invs = parseAF(rows);
+    if (!invs.length) throw new Error('ไม่พบใบกำกับในไฟล์');
+    IMP = {name:file.name, invs}; renderImp();
+  });
+}
+function parseAF(rows){
+  const out = []; let cur = null;
+  rows.forEach(r => {
+    const lv = num(r.subhdlevel), s = k => String(r[k] ?? '').trim();
+    if (lv === 1){
+      const no = s('no'), d = parseDate(s('date'));
+      if (!no || !d || !/^[A-Za-z0-9]/.test(no)){ cur = null; return; }      // ข้ามแถว "รวมเอกสาร"
+      cur = {invoiceNo:no, docRef:s('refno'), invoiceDate:d, dueDate:parseDate(s('duedate')), customerCode:s('coor'), customer:s('name'),
+             po:s('refto'), salesCode:s('qcempl'), amount:num(r.sdamtbfvat), totalAmount:num(r.stdtotamt), so:[], lines:[]};
+      out.push(cur);
+    } else if (lv === 2 && cur){
+      const qty = num(r.qty); if (!qty && !s('prodcode')) return;
+      cur.lines.push({itemCode:s('prodcode'), itemName:s('prodname'), qty, unit:s('saleum'), unitPrice:num(r.stdprice), amount:num(r.stdamt2) || r2(qty*num(r.stdprice))});
+    } else if (lv === 3 && cur){
+      const so = s('ordercode').replace(/^[^#]*#\s*/,'').replace(/\s+/g,'');
+      if (so && !cur.so.includes(so)) cur.so.push(so);
+    }
+  });
+  return out.map(i => ({...i, so:i.so.join(', ')}));
+}
+function impPlan(){
+  const ex = new Map(S.db.Invoices.map(i => [String(i.invoiceNo), i])), sm = salesMap();
+  return IMP.invs.map(v => { const e = ex.get(v.invoiceNo);
+    return {v, e, act: !e ? 'new' : e.status === 'NEW' ? 'upd' : 'skip', br: (e && e.brokerId) || sm[String(v.salesCode).toLowerCase()] || ''}; });
+}
+function renderImp(){
+  const P = impPlan(), c = a => P.filter(p => p.act === a).length, todo = P.filter(p => p.act !== 'skip');
+  const unk = [...new Set(todo.filter(p => !p.br && !isNoComm(p.v.salesCode)).map(p => p.v.salesCode || '(ว่าง)'))];
+  const mism = P.filter(p => Math.abs(sumBy(p.v.lines,'amount') - p.v.amount) > 0.01).map(p => p.v.invoiceNo);
+  $('#impArea').innerHTML = `<div class="sec"><p class="hint" style="margin:0 0 10px">ไฟล์: <b>${esc(IMP.name)}</b></p>
+   <div class="info"><div><span>ใบกำกับในไฟล์</span><b>${P.length}</b></div><div><span>รายการสินค้า</span><b>${sumBy(P,p=>p.v.lines.length)}</b></div>
+    <div><span>ยอดขายก่อน VAT</span><b>${money(sumBy(P,p=>p.v.amount))}</b></div><div><span>บิลใหม่ / อัปเดต</span><b>${c('new')} / ${c('upd')}</b></div>
+    <div><span>ข้าม (ทำงานไปแล้ว)</span><b>${c('skip')}</b></div><div><span>จับคู่นายหน้าอัตโนมัติ</span><b>${todo.filter(p=>p.br).length}</b></div></div>
+   ${unk.length?`<div class="warn">รหัสพนักงานขายที่ยังไม่ได้ผูกกับนายหน้า: <b>${esc(unk.join(', '))}</b><br>ไปตั้งที่หน้า <a href="#" onclick="go('brk');return false">นายหน้า</a> ช่อง “รหัสพนักงานขายใน Autoflight” แล้วกลับมานำเข้าใหม่ หรือเลือกนายหน้าเองทีละบิลก็ได้</div>`:''}
+   ${mism.length?`<div class="warn">ยอดรวมรายการสินค้าไม่เท่ากับยอดหัวบิล (อาจมีส่วนลดท้ายบิล): ${esc(mism.join(', '))}</div>`:''}
+   <div class="tw"><table class="tbl sm"><thead><tr><th>เลขที่</th><th>วันที่</th><th>ลูกค้า</th><th>PO</th><th>รหัสพนง.ขาย</th><th>นายหน้า</th><th>เงื่อนไข</th><th class="num">รายการ</th><th class="num">ก่อน VAT</th><th></th></tr></thead><tbody>
+   ${P.map(p=>`<tr><td><b>${esc(p.v.invoiceNo)}</b></td><td>${thDate(p.v.invoiceDate)}</td><td>${esc(p.v.customer)}</td><td>${esc(p.v.po)}</td><td>${esc(p.v.salesCode)}</td>
+     <td>${isNoComm(p.v.salesCode)?'<span class="muted">ไม่มีค่าคอม</span>':p.br?bName(p.br):'<span class="od">ยังไม่ผูก</span>'}</td><td>${creditTxt(p.v)}</td>
+     <td class="num">${p.v.lines.length}</td><td class="num">${money(p.v.amount)}</td><td>${badge(p.act)}</td></tr>`).join('')}
+   </tbody></table></div>
+   <button class="btn pri" style="margin-top:14px" onclick="doImport()" ${todo.length?'':'disabled'}>นำเข้า ${todo.length} บิล</button></div>`;
+}
+async function doImport(){
+  const P = impPlan().filter(p => p.act !== 'skip'), invRows = [], lineRows = [], del = [];
+  P.forEach(({v,e,br}) => {
+    const ids = v.lines.map((_,k) => v.invoiceNo+'#'+(k+1));
+    if (e) linesOf(v.invoiceNo).forEach(l => { if (!ids.includes(l.lineId)) del.push(l.lineId); });
+    v.lines.forEach((l,k) => lineRows.push({lineId:ids[k], invoiceNo:v.invoiceNo, seq:k+1, ...l, commPerUnit:0, commAmount:0}));
+    const nc = isNoComm(v.salesCode);
+    invRows.push({invoiceNo:v.invoiceNo, docRef:v.docRef, invoiceDate:v.invoiceDate, dueDate:v.dueDate, customerCode:v.customerCode, customer:v.customer,
+      po:v.po, so:v.so, salesCode:v.salesCode, amount:v.amount, totalAmount:v.totalAmount, brokerId:nc?'':br, commTotal:0, status:nc?'NOCOMM':'NEW', importedAt:nowStr()});
+  });
+  await busy(async()=>{ await batch([{table:'Lines',del,rows:lineRows},{table:'Invoices',rows:invRows}]); toast(`นำเข้า ${invRows.length} บิลเรียบร้อย`); IMP = null; S.f.st = 'NEW'; go('inv'); });
+}
+function demoData(){
+  const mk = (no,cust,code,po,sales,due,item,name,qty,price) => ({invoiceNo:no, docRef:'SI01/'+no, invoiceDate:'2026-10-02', dueDate:due, customerCode:code, customer:cust, po, so:'SO01/'+no, salesCode:sales,
+    amount:r2(qty*price), totalAmount:r2(qty*price*1.07), lines:[{itemCode:item, itemName:name, qty, unit:'ดวง', unitPrice:price, amount:r2(qty*price)}]});
+  IMP = {name:'ข้อมูลตัวอย่าง', invs:[
+    mk('69100001','ลูกค้า ก จำกัด','kj-00000','PO2026/220','02-ANAN','2026-12-01','kj-s-11D1401V','GUARRANTY STICKER 70x100MM.',15000,0.72),
+    mk('69100002','ลูกค้า ก จำกัด','kj-00000','PO2026/238','02-ANAN','2026-12-01','kj-s-5A6105T','SOLE PLATE STICKER 106x206MM.',4200,3.08),
+    mk('69100003','ลูกค้า ก จำกัด','kj-00000','PO2026/243','02-ANAN','2026-12-01','kj-s-11D1401V','GUARRANTY STICKER 70x100MM.',4000,0.72),
+    mk('69100006','ลูกค้า ข จำกัด','egat-00000','V-21640','07-JUTIMA','2026-10-02','egat-35x35-LED','LED STICKER 35x35',1000,2.5)]};
+  renderImp();
+}
+
+/* ========= ใบกำกับภาษี / ระบุค่าคอม ========= */
+function pgInv(){
+  return head('ใบกำกับภาษี / ระบุค่าคอม','คลิกที่บิลเพื่อใส่ค่าคอมต่อชิ้น และบันทึกการรับชำระ') +
+  `<div class="card"><div class="filters">
+    <input id="fQ" class="grow" placeholder="ค้นหาเลขที่ / PO / SO / ลูกค้า / ใบเสร็จ" oninput="renderInvTable()" value="${esc(S.f.q||'')}">
+    <select id="fSt" onchange="renderInvTable()"><option value="">ทุกสถานะ</option>${['NEW','PENDING','DUE','IN_PAYOUT','PAID','NOCOMM'].map(s=>`<option value="${s}" ${S.f.st===s?'selected':''}>${ST[s]}</option>`).join('')}</select>
+    <select id="fBr" onchange="renderInvTable()">${brokerOptions(S.f.br,'ทุกนายหน้า')}</select>
+    <input id="fM" type="month" value="${esc(S.f.m||'')}" onchange="renderInvTable()" title="เดือนของใบกำกับ">
+  </div><div id="invTable"></div></div>`;
+}
+function renderInvTable(){
+  S.f.q=$('#fQ').value; S.f.st=$('#fSt').value; S.f.br=$('#fBr').value; S.f.m=$('#fM').value;
+  const qq = S.f.q.trim().toLowerCase();
+  const L = S.db.Invoices.filter(i => (!S.f.st||i.status===S.f.st) && (!S.f.br||i.brokerId===S.f.br) && (!S.f.m||String(i.invoiceDate).startsWith(S.f.m))
+    && (!qq || [i.invoiceNo,i.po,i.so,i.customer,i.receiptNo,i.salesCode].join(' ').toLowerCase().includes(qq)))
+    .sort((a,b) => String(b.invoiceDate).localeCompare(String(a.invoiceDate)) || String(b.invoiceNo).localeCompare(String(a.invoiceNo)));
+  $('#invTable').innerHTML = L.length ? `<div class="tw"><table class="tbl"><thead><tr><th>เลขที่</th><th>วันที่</th><th>ลูกค้า</th><th>PO</th><th>เงื่อนไข</th><th class="num">ก่อน VAT</th><th>นายหน้า</th><th class="num">ค่าคอม</th><th>ใบเสร็จ</th><th>สถานะ</th></tr></thead><tbody>
+  ${L.slice(0,500).map(i=>`<tr class="click" onclick="openInv('${q(i.invoiceNo)}')"><td><b>${esc(i.invoiceNo)}</b></td><td>${thDate(i.invoiceDate)}</td><td>${esc(i.customer)}</td><td>${esc(i.po)}</td><td>${creditTxt(i)}</td><td class="num">${money(i.amount)}</td>
+   <td>${i.brokerId?bName(i.brokerId):'<span class="muted">—</span>'}</td><td class="num">${num(i.commTotal)?money(i.commTotal):'<span class="muted">—</span>'}</td><td>${esc(i.receiptNo)}</td><td>${badge(i.status)}</td></tr>`).join('')}
+  </tbody><tfoot><tr><td colspan="7">${L.length.toLocaleString()} บิล${L.length>500?' (แสดง 500 บิลล่าสุด)':''}</td><td class="num">${money(sumBy(L,'commTotal'))}</td><td colspan="2"></td></tr></tfoot></table></div>`
+  : '<div class="empty">ไม่พบข้อมูล</div>';
+}
+function suggestRates(inv){
+  const IV = new Map(S.db.Invoices.map(i => [i.invoiceNo, i])), best = {};
+  S.db.Lines.forEach(x => {
+    if (x.invoiceNo === inv.invoiceNo || !num(x.commPerUnit)) return;
+    const iv = IV.get(x.invoiceNo); if (!iv) return;
+    const score = (iv.customerCode === inv.customerCode ? '1' : '0') + iv.invoiceDate + iv.invoiceNo;
+    if (!best[x.itemCode] || score > best[x.itemCode].s) best[x.itemCode] = {s:score, v:num(x.commPerUnit)};
+  });
+  return best;
+}
+function openInv(no){
+  const inv = S.db.Invoices.find(i => i.invoiceNo === no); if (!inv) return;
+  const L = linesOf(no), lock = ['IN_PAYOUT','PAID'].includes(inv.status), dis = lock ? 'disabled' : '';
+  const sug = lock ? {} : suggestRates(inv); let nSug = 0;
+  const od = inv.status === 'PENDING' && inv.dueDate && inv.dueDate < today();
+  const body = `<div class="info"><div><span>วันที่</span><b>${thDate(inv.invoiceDate)}</b></div><div><span>ครบกำหนด</span><b class="${od?'od':''}">${thDate(inv.dueDate)}</b> <small>${creditTxt(inv)}</small></div>
+    <div><span>ลูกค้า</span><b>${esc(inv.customer)||'-'}</b></div><div><span>PO</span><b>${esc(inv.po)||'-'}</b></div><div><span>SO</span>${esc(inv.so)||'-'}</div>
+    <div><span>รหัสพนักงานขาย</span>${esc(inv.salesCode)||'-'}</div><div><span>ยอดก่อน VAT / รวม VAT</span><b>${money(inv.amount)}</b> / ${money(inv.totalAmount)}</div><div><span>สถานะ</span>${badge(inv.status)}</div>
+    ${inv.payoutId?`<div><span>รอบจ่าย</span><b>${esc(inv.payoutId)}</b></div>`:''}</div>
+   <div class="grid2"><label>นายหน้า<select id="mBr" ${dis}><option value="">— เลือกนายหน้า —</option>${brokerOptions(inv.brokerId)}</select></label>
+    ${lock?'':`<label>ค่าคอม/ชิ้น เท่ากันทุกรายการ<div class="inline"><input id="mAll" type="number" step="0.0001" placeholder="เช่น 0.01"><button class="btn" onclick="$('.cpu').forEach(e=>{e.value=$('#mAll').value;e.classList.remove('sug')});recalc()">ใช้ทุกรายการ</button></div></label>`}</div>
+   <div class="tw"><table class="tbl sm"><thead><tr><th>#</th><th>สินค้า</th><th class="num">จำนวน</th><th class="num">ราคา/หน่วย</th><th class="num">ค่าคอม/ชิ้น</th><th class="num">ค่าคอม</th></tr></thead><tbody>
+   ${L.map((l,i)=>{ let v = num(l.commPerUnit), cls = 'cpu';
+      if (!v && sug[l.itemCode]){ v = sug[l.itemCode].v; cls += ' sug'; nSug++; }
+      return `<tr><td>${i+1}</td><td>${esc(l.itemCode)}<br><small class="muted">${esc(l.itemName)}</small></td><td class="num">${qtyf(l.qty)} ${esc(l.unit)}</td><td class="num">${rate(l.unitPrice)}</td>
+     <td class="num"><input class="${cls}" data-id="${esc(l.lineId)}" data-q="${num(l.qty)}" type="number" step="0.0001" min="0" value="${v||''}" ${dis} oninput="this.classList.remove('sug');recalc()"></td><td class="num" id="c${i}"></td></tr>`; }).join('')}
+   </tbody><tfoot><tr><td colspan="5" class="num">รวมค่าคอมบิลนี้</td><td class="num" id="mTot"></td></tr></tfoot></table></div>
+   <p class="hint" id="sugHint"></p>
+   <div class="sec"><h4>การรับชำระ</h4><div class="grid2"><label>เลขที่ใบเสร็จรับเงิน<input id="mRc" value="${esc(inv.receiptNo)}" ${dis}></label>
+    <label>วันที่รับชำระ<input id="mRd" type="date" value="${esc(inv.receiptDate)}" ${dis}></label></div>
+    <p class="hint">เว้นว่างถ้ายังไม่ได้รับเงิน บิลจะอยู่สถานะ “รอรับชำระ” (ยอดค่าคอมพักไว้)</p></div>`;
+  const foot = lock ? '<button class="btn" onclick="closeModal()">ปิด</button>' :
+    `<button class="btn danger" style="margin-right:auto" onclick="noComm('${q(no)}')">บิลนี้ไม่มีค่าคอม</button><button class="btn" onclick="closeModal()">ยกเลิก</button><button class="btn pri" onclick="saveInv('${q(no)}')">บันทึก</button>`;
+  openModal('ใบกำกับภาษี '+no, body, foot);
+  if (nSug) $('#sugHint').innerHTML = `ช่อง<span style="background:#fef9c3;padding:0 6px;border-radius:4px">สีเหลือง</span> = ระบบเติมให้จากบิลก่อนหน้าของสินค้าตัวเดียวกัน กรุณาตรวจสอบก่อนบันทึก`;
+  recalc();
+}
+function recalc(){
+  let t = 0; $('.cpu').forEach((el,i) => { const c = r2(num(el.dataset.q)*num(el.value)); t += c; $('#c'+i).textContent = money(c); });
+  $('#mTot').textContent = money(r2(t));
+}
+async function saveInv(no){
+  const br=$('#mBr').value, rc=$('#mRc').value.trim(), rd=$('#mRd').value;
+  const lines = $('.cpu').map(el => ({lineId:el.dataset.id, commPerUnit:num(el.value), commAmount:r2(num(el.dataset.q)*num(el.value))}));
+  const tot = r2(lines.reduce((s,l) => s+l.commAmount, 0));
+  if (!br) return toast('กรุณาเลือกนายหน้า','err');
+  if (tot <= 0) return toast('กรุณาใส่ค่าคอมต่อชิ้นอย่างน้อย 1 รายการ (ถ้าไม่มีค่าคอม ให้กด “บิลนี้ไม่มีค่าคอม”)','err');
+  if (rc && !rd) return toast('กรุณาระบุวันที่รับชำระ','err');
+  const dup = rc && S.db.Invoices.find(i => i.receiptNo === rc && i.invoiceNo !== no);
+  if (dup && !confirm(`เลขที่ใบเสร็จ ${rc} ใช้กับบิล ${dup.invoiceNo} แล้ว ใช้ซ้ำหรือไม่? (กรณีใบเสร็จ 1 ใบรับชำระหลายบิล)`)) return;
+  await busy(async()=>{
+    await batch([{table:'Lines',rows:lines},{table:'Invoices',rows:[{invoiceNo:no,brokerId:br,commTotal:tot,status:rc?'DUE':'PENDING',receiptNo:rc,receiptDate:rc?rd:''}]}]);
+    closeModal(); toast('บันทึกแล้ว'); render();
+  });
+}
+async function noComm(no){
+  if (!confirm('ยืนยันว่าบิลนี้ไม่มีค่าคอมมิชชั่น?')) return;
+  await busy(async()=>{
+    await batch([{table:'Lines',rows:linesOf(no).map(l=>({lineId:l.lineId,commPerUnit:0,commAmount:0}))},{table:'Invoices',rows:[{invoiceNo:no,brokerId:'',commTotal:0,status:'NOCOMM'}]}]);
+    closeModal(); toast('บันทึกแล้ว'); render();
+  });
+}
+
+/* ========= บันทึกรับชำระ ========= */
+function pgRcpt(){
+  return head('บันทึกรับชำระ','กรอกเลขที่ใบเสร็จรับเงินของบิลที่ลูกค้าจ่ายแล้ว บิลจะย้ายไปเป็น “ค้างจ่ายค่าคอม”','<button class="btn pri" onclick="saveRcptAll()">บันทึกรายการที่กรอก</button>') +
+  `<div class="card"><div class="filters"><input id="rQ" class="grow" placeholder="ค้นหาเลขที่ / PO / ลูกค้า" oninput="renderRcpt()">
+   <select id="rBr" onchange="renderRcpt()">${brokerOptions('','ทุกนายหน้า')}</select></div><div id="rcptTable"></div></div>`;
+}
+function renderRcpt(){
+  const qq=$('#rQ').value.trim().toLowerCase(), br=$('#rBr').value, td=today();
+  const L = S.db.Invoices.filter(i => i.status==='PENDING' && (!br||i.brokerId===br) && (!qq||[i.invoiceNo,i.po,i.customer].join(' ').toLowerCase().includes(qq)))
+    .sort((a,b) => String(a.dueDate||a.invoiceDate).localeCompare(String(b.dueDate||b.invoiceDate)));
+  $('#rcptTable').innerHTML = L.length ? `<div class="tw"><table class="tbl"><thead><tr><th>เลขที่</th><th>ลูกค้า / PO</th><th>ครบกำหนด</th><th>นายหน้า</th><th class="num">ยอดรวม VAT</th><th class="num">ค่าคอม</th><th>เลขที่ใบเสร็จ</th><th>วันที่รับชำระ</th></tr></thead><tbody>
+  ${L.map(i=>`<tr data-no="${esc(i.invoiceNo)}"><td><a href="#" onclick="openInv('${q(i.invoiceNo)}');return false"><b>${esc(i.invoiceNo)}</b></a><br><small class="muted">${thDate(i.invoiceDate)}</small></td>
+   <td>${esc(i.customer)}<br><small class="muted">${esc(i.po)}</small></td><td class="${i.dueDate&&i.dueDate<td?'od':''}">${thDate(i.dueDate)}<br><small class="muted">${creditTxt(i)}</small></td><td>${bName(i.brokerId)}</td>
+   <td class="num">${money(i.totalAmount||i.amount)}</td><td class="num">${money(i.commTotal)}</td><td><input class="rc" placeholder="เลขที่ใบเสร็จ" style="min-width:140px"></td><td><input class="rd" type="date" value="${td}"></td></tr>`).join('')}
+  </tbody></table></div><p class="hint">เรียงตามวันครบกำหนด · สีแดง = เลยกำหนดชำระแล้ว</p>` : '<div class="empty">ไม่มีบิลที่รอรับชำระ</div>';
+}
+async function saveRcptAll(){
+  const rows = []; $('#rcptTable tr[data-no]').forEach(tr => { const rc = tr.querySelector('.rc').value.trim(); if (rc) rows.push({invoiceNo:tr.dataset.no, receiptNo:rc, receiptDate:tr.querySelector('.rd').value||today(), status:'DUE'}); });
+  if (!rows.length) return toast('ยังไม่ได้กรอกเลขที่ใบเสร็จ','err');
+  await busy(async()=>{ await batch([{table:'Invoices',rows}]); toast(`บันทึกรับชำระ ${rows.length} บิลแล้ว`); render(); });
+}
+
+/* ========= รอบจ่ายค่าคอม ========= */
+const payoutItems = pid => ({inv:S.db.Invoices.filter(i=>i.payoutId===pid).sort((a,b)=>String(a.invoiceDate).localeCompare(String(b.invoiceDate))), adj:S.db.Adjustments.filter(a=>a.payoutId===pid)});
+function dueGroups(){
+  const D = S.db.Invoices.filter(i => i.status === 'DUE'), A = S.db.Adjustments.filter(a => a.status === 'OPEN');
+  return [...new Set([...D.map(i=>i.brokerId),...A.map(a=>a.brokerId)])].map(id => {
+    const inv = D.filter(i=>i.brokerId===id), adj = A.filter(a=>a.brokerId===id), wr = whtOf(brokerOf(id));
+    const g = r2(sumBy(inv,'commTotal')+sumBy(adj,'commAmount')), w = g > 0 ? r2(g*wr/100) : 0;
+    return {id, inv, adj, a:sumBy(adj,'commAmount'), g, wr, w, n:r2(g-w)};
+  }).sort((x,y) => y.g-x.g);
+}
+function pgPay(){
+  const G = dueGroups();
+  return head('รอบจ่ายค่าคอม','สิ้นเดือน: สร้างรอบจ่าย → พิมพ์ให้เจ้านายอนุมัติ → โอนเงิน → กลับมากดปิดงาน',
+    G.length?'<button class="btn pri" onclick="openAllPayout()">สร้างรอบจ่ายสิ้นเดือน (ทุกนายหน้า)</button>':'') +
+  `<div class="card"><h3>ค่าคอมค้างจ่าย (ลูกค้าชำระแล้ว)</h3>${G.length ? `<div class="tw"><table class="tbl"><thead><tr><th>นายหน้า</th><th class="num">บิล</th><th class="num">ลดหนี้ / ปรับปรุง</th><th class="num">ค่าคอมรวม</th><th class="num">หัก ณ ที่จ่าย</th><th class="num">ยอดโอน</th><th></th></tr></thead><tbody>
+   ${G.map(r=>`<tr><td><b>${bName(r.id)}</b></td><td class="num">${r.inv.length}</td><td class="num">${r.a?money(r.a):'—'}</td><td class="num">${money(r.g)}</td><td class="num">${money(r.w)} <small class="muted">(${rate(r.wr)}%)</small></td><td class="num"><b>${money(r.n)}</b></td>
+   <td class="num"><button class="btn sm" onclick="openNewPayout('${q(r.id)}')">สร้างรายคน</button></td></tr>`).join('')}
+   </tbody><tfoot><tr><td>รวม</td><td class="num">${sumBy(G,g=>g.inv.length)}</td><td></td><td class="num">${money(sumBy(G,'g'))}</td><td class="num">${money(sumBy(G,'w'))}</td><td class="num">${money(sumBy(G,'n'))}</td><td></td></tr></tfoot></table></div>` : '<div class="empty">ไม่มีค่าคอมค้างจ่าย</div>'}</div>
+  <div class="card"><div class="filters"><h3 style="margin:0;flex:1">รายการรอบจ่าย</h3>
+   <select onchange="S.f.pst=this.value;renderPayList()">${[['WAITING','รอโอน'],['CLOSED','ปิดงานแล้ว'],['CANCELLED','ยกเลิก'],['','ทั้งหมด']].map(([v,l])=>`<option value="${v}" ${(S.f.pst??'WAITING')===v?'selected':''}>${l}</option>`).join('')}</select>
+   <input type="month" value="${esc(S.f.pm||'')}" onchange="S.f.pm=this.value;renderPayList()" title="เดือนที่สร้างรอบจ่าย">
+   <button class="btn" onclick="printSummary()">พิมพ์สรุปรวม</button></div>
+   <div id="payList"></div></div>`;
+}
+function payFiltered(){
+  const st = S.f.pst ?? 'WAITING', pm = S.f.pm || '';
+  return S.db.Payouts.filter(p => (!st || p.status === st) && (!pm || String(p.createdAt).startsWith(pm))).sort((a,b) => String(b.createdAt).localeCompare(String(a.createdAt)));
+}
+function renderPayList(){
+  const L = payFiltered();
+  $('#payList').innerHTML = L.length ? `<div class="tw"><table class="tbl"><thead><tr><th>เลขที่รอบจ่าย</th><th>วันที่สร้าง</th><th>นายหน้า</th><th>งวด</th><th class="num">บิล</th><th class="num">ค่าคอมรวม</th><th class="num">หัก ณ ที่จ่าย</th><th class="num">ยอดโอน</th><th>สถานะ</th><th>วันที่โอน</th></tr></thead><tbody>
+  ${L.map(p=>`<tr class="click" onclick="viewPayout('${q(p.payoutId)}')"><td><b>${esc(p.payoutId)}</b></td><td>${thDate(p.createdAt)}</td><td>${bName(p.brokerId)}</td><td>${esc(p.periodNote)}</td><td class="num">${esc(p.invoiceCount)}</td><td class="num">${money(p.gross)}</td><td class="num">${money(p.wht)}</td><td class="num"><b>${money(p.net)}</b></td><td>${badge(p.status)}</td><td>${p.transferDate?thDate(p.transferDate):''}</td></tr>`).join('')}
+  </tbody><tfoot><tr><td colspan="5">รวม ${L.length} รอบจ่าย</td><td class="num">${money(sumBy(L,'gross'))}</td><td class="num">${money(sumBy(L,'wht'))}</td><td class="num">${money(sumBy(L,'net'))}</td><td colspan="2"></td></tr></tfoot></table></div>` : '<div class="empty">ไม่มีรายการ</div>';
+}
+function printSummary(){
+  const L = payFiltered(); if (!L.length) return toast('ไม่มีรายการให้พิมพ์','err');
+  const html = `<div class="rp"><div class="rp-head"><div><h2>${esc(CONFIG.COMPANY)}</h2><div>สรุปการจ่ายค่าคอมมิชชั่นนายหน้า</div></div>
+    <div class="rp-no">${S.f.pm?'เดือน '+esc(TH_M[+S.f.pm.slice(5)-1]+' '+(+S.f.pm.slice(0,4)+543)):''}<div>พิมพ์วันที่ ${thDate(today())}</div></div></div>
+   <table><thead><tr><th>#</th><th>เลขที่รอบจ่าย</th><th>นายหน้า</th><th>บัญชีรับเงิน</th><th class="num">บิล</th><th class="num">ค่าคอมรวม</th><th class="num">หัก ณ ที่จ่าย</th><th class="num">ยอดโอน</th><th>สถานะ</th></tr></thead><tbody>
+   ${L.map((p,i)=>{ const b = brokerOf(p.brokerId)||{}; return `<tr><td>${i+1}</td><td>${esc(p.payoutId)}</td><td>${esc(b.name)}</td><td>${esc(b.bank)} ${esc(b.accountNo)}</td><td class="num">${esc(p.invoiceCount)}</td><td class="num">${money(p.gross)}</td><td class="num">${money(p.wht)}</td><td class="num">${money(p.net)}</td><td>${ST[p.status]||''}${p.transferDate?' '+thDate(p.transferDate):''}</td></tr>`; }).join('')}
+   </tbody><tfoot><tr class="grand"><td colspan="5" class="num">รวม</td><td class="num">${money(sumBy(L,'gross'))}</td><td class="num">${money(sumBy(L,'wht'))}</td><td class="num">${money(sumBy(L,'net'))}</td><td></td></tr></tfoot></table>
+   <div class="sign"><div>ผู้จัดทำ<br><br>..............................<br>${esc(S.user.displayName)}</div><div>ผู้ตรวจสอบ<br><br>..............................</div><div>ผู้อนุมัติ<br><br>..............................</div></div></div>`;
+  printDoc('สรุปค่าคอม', html);
+}
+function openAllPayout(){
+  const G = dueGroups().filter(g => g.n > 0);
+  openModal('สร้างรอบจ่ายสิ้นเดือน (ทุกนายหน้า)', `<label>งวด / หมายเหตุ<input id="aP" value="${periodDefault()}"></label>
+   <div class="tw" style="margin-top:14px"><table class="tbl sm"><thead><tr><th>นายหน้า</th><th class="num">บิล</th><th class="num">ค่าคอมรวม</th><th class="num">หัก ณ ที่จ่าย</th><th class="num">ยอดโอน</th></tr></thead><tbody>
+   ${G.map(g=>`<tr><td>${bName(g.id)}</td><td class="num">${g.inv.length}</td><td class="num">${money(g.g)}</td><td class="num">${money(g.w)} (${rate(g.wr)}%)</td><td class="num"><b>${money(g.n)}</b></td></tr>`).join('')}
+   </tbody><tfoot><tr><td>รวม</td><td class="num">${sumBy(G,g=>g.inv.length)}</td><td class="num">${money(sumBy(G,'g'))}</td><td class="num">${money(sumBy(G,'w'))}</td><td class="num">${money(sumBy(G,'n'))}</td></tr></tfoot></table></div>
+   <p class="hint">ระบบจะสร้างรอบจ่ายแยกรายนายหน้า โดยรวมบิลที่ลูกค้าชำระแล้วทั้งหมด ถ้าต้องการเลือกบางบิลหรือแก้ยอดภาษี ให้ใช้ปุ่ม “สร้างรายคน”</p>`,
+   `<button class="btn" onclick="closeModal()">ยกเลิก</button><button class="btn pri" onclick="createAllPayouts()">สร้าง ${G.length} รอบจ่าย</button>`);
+}
+async function createAllPayouts(){
+  const period = $('#aP').value.trim(), G = dueGroups().filter(g => g.n > 0), inv = [], adj = [], pay = [];
+  G.forEach((g,k) => { const pid = genPid(k+1);
+    g.inv.forEach(i => inv.push({invoiceNo:i.invoiceNo, status:'IN_PAYOUT', payoutId:pid}));
+    g.adj.forEach(a => adj.push({adjId:a.adjId, status:'IN_PAYOUT', payoutId:pid}));
+    pay.push({payoutId:pid, brokerId:g.id, createdAt:nowStr(), periodNote:period, invoiceCount:g.inv.length, gross:g.g, whtRate:g.wr, wht:g.w, net:g.n, status:'WAITING', createdBy:S.user.displayName});
+  });
+  await busy(async()=>{ await batch([{table:'Invoices',rows:inv},{table:'Adjustments',rows:adj},{table:'Payouts',rows:pay}]); closeModal(); S.f.pst = 'WAITING'; toast(`สร้างรอบจ่าย ${pay.length} รายการแล้ว`); render(); });
+}
+function openNewPayout(id){
+  const b = brokerOf(id) || {};
+  const D = S.db.Invoices.filter(i=>i.status==='DUE'&&i.brokerId===id).sort((x,y)=>String(x.invoiceDate).localeCompare(String(y.invoiceDate)));
+  const A = S.db.Adjustments.filter(a=>a.status==='OPEN'&&a.brokerId===id);
+  const body = `<div class="info"><div><span>นายหน้า</span><b>${esc(b.name)}</b></div><div><span>เลขผู้เสียภาษี</span>${esc(b.taxId)||'-'}</div><div><span>บัญชีรับเงิน</span>${esc(b.bank)} ${esc(b.accountNo)}</div></div>
+   <div class="tw"><table class="tbl sm"><thead><tr><th><input type="checkbox" checked onchange="$('.pk,.pa').forEach(c=>c.checked=this.checked);calcNew()"></th><th>เอกสาร</th><th>วันที่</th><th>PO</th><th>ลูกค้า</th><th>ใบเสร็จ</th><th class="num">ค่าคอม</th></tr></thead><tbody>
+   ${D.map(i=>`<tr><td><input type="checkbox" class="pk" data-no="${esc(i.invoiceNo)}" data-v="${num(i.commTotal)}" checked onchange="calcNew()"></td><td>${esc(i.invoiceNo)}</td><td>${thDate(i.invoiceDate)}</td><td>${esc(i.po)}</td><td>${esc(i.customer)}</td><td>${esc(i.receiptNo)}</td><td class="num">${money(i.commTotal)}</td></tr>`).join('')}
+   ${A.map(a=>`<tr><td><input type="checkbox" class="pa" data-id="${esc(a.adjId)}" data-v="${num(a.commAmount)}" checked onchange="calcNew()"></td><td>${esc(a.docNo)}</td><td>${thDate(a.docDate)}</td><td colspan="3">ปรับปรุง อ้างอิง ${esc(a.invoiceNo)} ${esc(a.description)}</td><td class="num">${money(a.commAmount)}</td></tr>`).join('')}
+   </tbody></table></div>
+   <div class="grid2" style="margin-top:16px"><label>งวด / หมายเหตุ<input id="nP" value="${periodDefault()}"></label>
+    <label>อัตราภาษีหัก ณ ที่จ่าย (%)<input id="nW" type="number" step="0.01" value="${whtOf(b)}" oninput="calcNew()"></label>
+    <label>ภาษีหัก ณ ที่จ่าย (บาท) แก้เองได้<input id="nWa" type="number" step="0.01" oninput="calcNew(true)"></label></div>
+   <div class="sum"><div><span>รวมค่าคอมมิชชั่น</span><b id="sG"></b></div><div><span>หัก ภาษี ณ ที่จ่าย</span><b id="sW"></b></div><div class="net"><span>ยอดโอนสุทธิ</span><span id="sN"></span></div></div>`;
+  openModal('สร้างรอบจ่าย: '+(b.name||''), body, `<button class="btn" onclick="closeModal()">ยกเลิก</button><button class="btn pri" onclick="createPayout('${q(id)}')">สร้างรอบจ่าย</button>`);
+  calcNew();
+}
+function calcNew(manual){
+  const g = r2($('.pk:checked,.pa:checked').reduce((s,c) => s+num(c.dataset.v), 0));
+  if (!manual) $('#nWa').value = (g>0 ? r2(g*num($('#nW').value)/100) : 0).toFixed(2);
+  const w = num($('#nWa').value);
+  $('#sG').textContent = money(g); $('#sW').textContent = '('+money(w)+')'; $('#sN').textContent = money(r2(g-w));
+  return {g, w, n:r2(g-w)};
+}
+async function createPayout(id){
+  const {g,w,n} = calcNew(true);
+  const P = $('.pk:checked').map(c=>c.dataset.no), A = $('.pa:checked').map(c=>c.dataset.id);
+  if (!P.length && !A.length) return toast('กรุณาเลือกอย่างน้อย 1 รายการ','err');
+  if (n <= 0) return toast('ยอดโอนสุทธิต้องมากกว่า 0','err');
+  const pid = genPid();
+  const pRow = {payoutId:pid,brokerId:id,createdAt:nowStr(),periodNote:$('#nP').value.trim(),invoiceCount:P.length,gross:g,whtRate:num($('#nW').value),wht:w,net:n,status:'WAITING',createdBy:S.user.displayName};
+  await busy(async()=>{
+    await batch([{table:'Invoices',rows:P.map(no=>({invoiceNo:no,status:'IN_PAYOUT',payoutId:pid}))},
+                 {table:'Adjustments',rows:A.map(x=>({adjId:x,status:'IN_PAYOUT',payoutId:pid}))},{table:'Payouts',rows:[pRow]}]);
+    toast('สร้างรอบจ่ายแล้ว'); render(); viewPayout(pid);
+  });
+}
+function reportHTML(p, detail){
+  const b = brokerOf(p.brokerId) || {}, {inv,adj} = payoutItems(p.payoutId); let n = 0;
+  const rows = inv.map(v => { n++;
+    let h = `<tr><td>${n}</td><td><b>${esc(v.invoiceNo)}</b></td><td>${thDate(v.invoiceDate)}</td><td>${esc(v.po)}</td><td>${esc(v.customer)}</td><td>${esc(v.receiptNo)}</td><td>${thDate(v.receiptDate)}</td><td class="num">${money(v.commTotal)}</td></tr>`;
+    if (detail) h += linesOf(v.invoiceNo).filter(l=>num(l.commAmount)).map(l=>`<tr class="sub"><td></td><td colspan="6">${esc(l.itemCode)} ${esc(l.itemName)}: ${qtyf(l.qty)} ${esc(l.unit)} × ${rate(l.commPerUnit)}</td><td class="num">${money(l.commAmount)}</td></tr>`).join('');
+    return h; }).join('') +
+    adj.map(a => { n++; return `<tr><td>${n}</td><td>${esc(a.docNo)}</td><td>${thDate(a.docDate)}</td><td colspan="4">ปรับปรุง/ลดหนี้ อ้างอิง ${esc(a.invoiceNo)} ${esc(a.description)}</td><td class="num">${money(a.commAmount)}</td></tr>`; }).join('');
+  const rateTxt = Math.abs(r2(num(p.gross)*num(p.whtRate)/100) - num(p.wht)) < 0.01 ? ` ${rate(p.whtRate)}%` : '';
+  return `<div class="rp"><div class="rp-head"><div><h2>${esc(CONFIG.COMPANY)}</h2><div>ใบสรุปค่าคอมมิชชั่นนายหน้า</div></div>
+    <div class="rp-no"><div>เลขที่ <b>${esc(p.payoutId)}</b></div><div>วันที่ ${thDate(p.createdAt)}</div><div>${badge(p.status)}</div></div></div>
+   <div class="rp-to"><div><span>นายหน้า</span><b>${esc(b.name)}</b></div><div><span>เลขประจำตัวผู้เสียภาษี</span>${esc(b.taxId)||'-'}</div>
+    <div><span>บัญชีรับเงิน</span>${esc(b.bank)} ${esc(b.accountNo)} ${b.accountName?'('+esc(b.accountName)+')':''}</div><div><span>งวด</span>${esc(p.periodNote)||'-'}</div></div>
+   <table><thead><tr><th>#</th><th>ใบกำกับภาษี</th><th>วันที่</th><th>PO</th><th>ลูกค้า</th><th>ใบเสร็จ</th><th>วันที่รับชำระ</th><th class="num">ค่าคอม (บาท)</th></tr></thead><tbody>${rows}</tbody>
+   <tfoot><tr><td colspan="7" class="num">รวมค่าคอมมิชชั่น</td><td class="num">${money(p.gross)}</td></tr>
+    <tr><td colspan="7" class="num">หัก ภาษีหัก ณ ที่จ่าย${rateTxt}</td><td class="num">(${money(p.wht)})</td></tr>
+    <tr class="grand"><td colspan="7" class="num">ยอดโอนสุทธิ</td><td class="num">${money(p.net)}</td></tr></tfoot></table>
+   ${p.status==='CLOSED'?`<p class="rp-paid">โอนเงินแล้ววันที่ ${thDate(p.transferDate)} · อ้างอิง ${esc(p.transferRef)||'-'} · ปิดงานโดย ${esc(p.closedBy)}</p>`:''}
+   <div class="sign"><div>ผู้จัดทำ<br><br>..............................<br>${esc(p.createdBy)}</div><div>ผู้อนุมัติ<br><br>..............................</div><div>ผู้รับเงิน<br><br>..............................<br>${esc(b.name)}</div></div></div>`;
+}
+function viewPayout(pid, detail=false){
+  const p = S.db.Payouts.find(x => x.payoutId === pid); if (!p) return;
+  const w = p.status === 'WAITING';
+  openModal('รอบจ่าย '+pid, `<label class="chk" style="margin-bottom:12px"><input type="checkbox" ${detail?'checked':''} onchange="viewPayout('${q(pid)}',this.checked)"> แสดงรายการสินค้าในแต่ละบิล</label>${reportHTML(p,detail)}`,
+    `${w?`<button class="btn danger" style="margin-right:auto" onclick="cancelPayout('${q(pid)}')">ยกเลิกรอบจ่าย</button>`:''}
+     <button class="btn" onclick="exportPayout('${q(pid)}')">ส่งออก Excel</button><button class="btn" onclick="printDoc('${q(pid)}',reportHTML(S.db.Payouts.find(x=>x.payoutId==='${q(pid)}'),${detail}))">พิมพ์ / บันทึก PDF</button>
+     ${w?`<button class="btn ok" onclick="askClose('${q(pid)}')">โอนแล้ว · ปิดงาน</button>`:''}`);
+}
+function exportPayout(pid){
+  const p = S.db.Payouts.find(x => x.payoutId === pid), b = brokerOf(p.brokerId) || {}, {inv,adj} = payoutItems(pid);
+  const aoa = [[CONFIG.COMPANY],['ใบสรุปค่าคอมมิชชั่น',p.payoutId],['นายหน้า',b.name||''],['งวด',p.periodNote||''],[],
+    ['ใบกำกับภาษี','วันที่','PO','ลูกค้า','ใบเสร็จ','วันที่รับชำระ','รหัสสินค้า','สินค้า','จำนวน','ค่าคอม/ชิ้น','ค่าคอม']];
+  inv.forEach(v => linesOf(v.invoiceNo).filter(l=>num(l.commAmount)).forEach(l => aoa.push([v.invoiceNo,thDateRaw(v.invoiceDate),v.po,v.customer,v.receiptNo,thDateRaw(v.receiptDate),l.itemCode,l.itemName,num(l.qty),num(l.commPerUnit),num(l.commAmount)])));
+  adj.forEach(a => aoa.push([a.docNo,thDateRaw(a.docDate),'','','','','','ปรับปรุง/ลดหนี้ อ้างอิง '+a.invoiceNo,'','',num(a.commAmount)]));
+  aoa.push([],['','','','','','','','','','รวม',num(p.gross)],['','','','','','','','','','หัก ณ ที่จ่าย',num(p.wht)],['','','','','','','','','','ยอดโอนสุทธิ',num(p.net)]);
+  const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(aoa), 'ค่าคอม'); XLSX.writeFile(wb, pid+'.xlsx');
+}
+function askClose(pid){
+  const p = S.db.Payouts.find(x => x.payoutId === pid);
+  openModal('ปิดงาน: ยืนยันการโอนเงิน', `<p>รอบจ่าย <b>${esc(pid)}</b> ยอดโอน <b>${money(p.net)}</b> บาท ให้ <b>${bName(p.brokerId)}</b></p>
+    <div class="grid2"><label>วันที่โอน<input type="date" id="cD" value="${today()}"></label><label>เลขอ้างอิงการโอน / หมายเหตุ<input id="cR" placeholder="เช่น เลขที่รายการธนาคาร"></label></div>
+    <p class="hint">เมื่อปิดงานแล้ว บิลในรอบนี้จะถูกล็อก แก้ไขผ่านหน้าเว็บไม่ได้</p>`,
+    `<button class="btn" onclick="viewPayout('${q(pid)}')">ย้อนกลับ</button><button class="btn ok" onclick="closePayout('${q(pid)}')">ยืนยันปิดงาน</button>`);
+}
+async function closePayout(pid){
+  const td = $('#cD').value, ref = $('#cR').value.trim(); if (!td) return toast('กรุณาระบุวันที่โอน','err');
+  const {inv,adj} = payoutItems(pid);
+  await busy(async()=>{
+    await batch([{table:'Invoices',rows:inv.map(i=>({invoiceNo:i.invoiceNo,status:'PAID'}))},{table:'Adjustments',rows:adj.map(a=>({adjId:a.adjId,status:'PAID'}))},
+                 {table:'Payouts',rows:[{payoutId:pid,status:'CLOSED',transferDate:td,transferRef:ref,closedBy:S.user.displayName,closedAt:nowStr()}]}]);
+    closeModal(); toast('ปิดงานเรียบร้อย'); render();
+  });
+}
+async function cancelPayout(pid){
+  if (!confirm('ยกเลิกรอบจ่ายนี้? บิลทั้งหมดจะกลับไปเป็น “ค้างจ่ายค่าคอม”')) return;
+  const {inv,adj} = payoutItems(pid);
+  await busy(async()=>{
+    await batch([{table:'Invoices',rows:inv.map(i=>({invoiceNo:i.invoiceNo,status:'DUE',payoutId:''}))},{table:'Adjustments',rows:adj.map(a=>({adjId:a.adjId,status:'OPEN',payoutId:''}))},
+                 {table:'Payouts',rows:[{payoutId:pid,status:'CANCELLED'}]}]);
+    closeModal(); toast('ยกเลิกรอบจ่ายแล้ว'); render();
+  });
+}
+
+/* ========= ลดหนี้ / ปรับปรุง ========= */
+function pgAdj(){
+  const L = [...S.db.Adjustments].sort((a,b) => String(b.docDate).localeCompare(String(a.docDate)));
+  return head('ลดหนี้ / ปรับปรุงค่าคอม','ใช้เมื่อมีลดหนี้หรือคืนสินค้าหลังจ่ายค่าคอมไปแล้ว ยอดจะถูกหักในรอบจ่ายถัดไปของนายหน้าคนนั้น','<button class="btn pri" onclick="openAdj()">+ เพิ่มรายการ</button>') +
+  `<div class="card">${L.length ? `<div class="tw"><table class="tbl"><thead><tr><th>เลขที่เอกสาร</th><th>วันที่</th><th>อ้างอิงใบกำกับ</th><th>นายหน้า</th><th>รายละเอียด</th><th class="num">ปรับค่าคอม</th><th>สถานะ</th><th>รอบจ่าย</th><th></th></tr></thead><tbody>
+  ${L.map(a=>`<tr><td><b>${esc(a.docNo)}</b></td><td>${thDate(a.docDate)}</td><td>${esc(a.invoiceNo)}</td><td>${bName(a.brokerId)}</td><td>${esc(a.description)}</td>
+   <td class="num" style="color:${num(a.commAmount)<0?'#dc2626':'#059669'}">${money(a.commAmount)}</td><td>${badge(a.status)}</td><td>${esc(a.payoutId)}</td>
+   <td>${a.status==='OPEN'?`<button class="btn sm danger" onclick="delAdj('${q(a.adjId)}')">ลบ</button>`:''}</td></tr>`).join('')}
+  </tbody></table></div>` : '<div class="empty">ยังไม่มีรายการ</div>'}
+  <p class="hint">ถ้าบิลยังไม่ได้เข้ารอบจ่าย ให้แก้ค่าคอมที่บิลนั้นโดยตรงแทน</p></div>`;
+}
+function openAdj(){
+  const body = `<div class="grid2"><label>เลขที่ใบลดหนี้ / เอกสาร *<input id="a_doc"></label><label>วันที่<input id="a_date" type="date" value="${today()}"></label>
+    <label>อ้างอิงใบกำกับภาษี<input id="a_inv" list="dlInv" oninput="adjPick()" placeholder="พิมพ์เลขที่ใบกำกับ"></label>
+    <label>นายหน้า *<select id="a_br"><option value="">— เลือก —</option>${brokerOptions('')}</select></label>
+    <label>ประเภท<select id="a_type"><option value="-1">หักคืนค่าคอม (ลดหนี้ / คืนสินค้า)</option><option value="1">จ่ายเพิ่ม</option></select></label>
+    <label>รายละเอียด<input id="a_desc" placeholder="เช่น คืนสินค้า 200 ดวง"></label></div>
+   <datalist id="dlInv">${S.db.Invoices.filter(i=>i.brokerId).map(i=>`<option value="${esc(i.invoiceNo)}">`).join('')}</datalist>
+   <div class="info" style="display:block"><b>ตัวช่วยคำนวณ</b><div class="grid2" style="margin:8px 0 0">
+    <label>จำนวนชิ้น<input id="a_q" type="number" oninput="adjCalc()"></label><label>ค่าคอม/ชิ้น<input id="a_r" type="number" step="0.0001" oninput="adjCalc()"></label>
+    <label>ยอดค่าคอมที่ปรับ (บาท) *<input id="a_amt" type="number" step="0.01"></label></div></div>`;
+  openModal('เพิ่มรายการลดหนี้ / ปรับปรุง', body, `<button class="btn" onclick="closeModal()">ยกเลิก</button><button class="btn pri" onclick="saveAdj()">บันทึก</button>`);
+}
+function adjPick(){ const i = S.db.Invoices.find(x => x.invoiceNo === $('#a_inv').value.trim()); if (!i) return; $('#a_br').value = i.brokerId; const l = linesOf(i.invoiceNo).find(l => num(l.commPerUnit)); if (l) $('#a_r').value = num(l.commPerUnit); }
+function adjCalc(){ $('#a_amt').value = r2(num($('#a_q').value)*num($('#a_r').value)).toFixed(2); }
+async function saveAdj(){
+  const doc=$('#a_doc').value.trim(), br=$('#a_br').value, amt=Math.abs(num($('#a_amt').value));
+  if (!doc || !br || !amt) return toast('กรุณากรอกเลขที่เอกสาร นายหน้า และยอดเงิน','err');
+  const row = {adjId:'ADJ'+Date.now(), docNo:doc, docDate:$('#a_date').value, invoiceNo:$('#a_inv').value.trim(), brokerId:br, description:$('#a_desc').value.trim(),
+               commAmount:r2(amt*num($('#a_type').value)), status:'OPEN', payoutId:''};
+  await busy(async()=>{ await batch([{table:'Adjustments',rows:[row]}]); closeModal(); toast('บันทึกแล้ว'); render(); });
+}
+async function delAdj(id){ if (!confirm('ลบรายการนี้?')) return; await busy(async()=>{ await batch([{table:'Adjustments',del:[id]}]); render(); }); }
+
+/* ========= นายหน้า ========= */
+function pgBrk(){
+  const L = [...S.db.Brokers].sort((a,b) => String(a.name).localeCompare(String(b.name),'th'));
+  return head('นายหน้า','ข้อมูลนายหน้า รหัสพนักงานขายใน Autoflight บัญชีรับเงิน และอัตราภาษีหัก ณ ที่จ่าย', `<button class="btn pri" onclick="openBrk('')">+ เพิ่มนายหน้า</button>`) +
+  `<div class="card">${L.length ? `<div class="tw"><table class="tbl"><thead><tr><th>ชื่อ</th><th>รหัสพนง.ขาย (Autoflight)</th><th>เลขผู้เสียภาษี</th><th>โทร</th><th>บัญชีรับเงิน</th><th class="num">หัก ณ ที่จ่าย</th><th>สถานะ</th></tr></thead><tbody>
+  ${L.map(b=>`<tr class="click" onclick="openBrk('${q(b.id)}')"><td><b>${esc(b.name)}</b></td><td>${esc(b.salesCode)||'<span class="od">ยังไม่ระบุ</span>'}</td><td>${esc(b.taxId)}</td><td>${esc(b.phone)}</td><td>${esc(b.bank)} ${esc(b.accountNo)}</td><td class="num">${rate(whtOf(b))}%</td>
+   <td>${String(b.active).toUpperCase()==='FALSE'?'<span class="badge b-CANCELLED">ปิดใช้งาน</span>':'<span class="badge b-PAID">ใช้งาน</span>'}</td></tr>`).join('')}
+  </tbody></table></div>` : '<div class="empty">ยังไม่มีนายหน้า</div>'}</div>`;
+}
+function openBrk(id){
+  const b = S.db.Brokers.find(x => x.id === id) || {active:'TRUE', whtRate:CONFIG.DEFAULT_WHT};
+  const f = (k,l,t='text',ph='') => `<label>${l}<input id="b_${k}" type="${t}" value="${esc(b[k])}" placeholder="${ph}"></label>`;
+  openModal(id ? 'แก้ไขนายหน้า' : 'เพิ่มนายหน้า',
+    `<div class="grid2">${f('name','ชื่อ-นามสกุล *')}${f('salesCode','รหัสพนักงานขายใน Autoflight','text','เช่น 02-ANAN (หลายรหัสคั่นด้วย ,)')}
+     ${f('taxId','เลขประจำตัวผู้เสียภาษี / บัตรประชาชน')}${f('phone','เบอร์โทร')}${f('whtRate','อัตราหัก ณ ที่จ่าย (%)','number')}
+     ${f('bank','ธนาคาร')}${f('accountNo','เลขที่บัญชี')}${f('accountName','ชื่อบัญชี')}
+     <label>สถานะ<select id="b_active"><option value="TRUE">ใช้งาน</option><option value="FALSE" ${String(b.active).toUpperCase()==='FALSE'?'selected':''}>ปิดใช้งาน</option></select></label></div>
+     <label>หมายเหตุ<input id="b_note" value="${esc(b.note)}"></label>`,
+    `<button class="btn" onclick="closeModal()">ยกเลิก</button><button class="btn pri" onclick="saveBrk('${q(id)}')">บันทึก</button>`);
+}
+async function saveBrk(id){
+  const g = k => $('#b_'+k).value.trim();
+  if (!g('name')) return toast('กรุณาใส่ชื่อนายหน้า','err');
+  const row = {id: id || 'BR'+Date.now().toString(36).toUpperCase()};
+  ['name','salesCode','taxId','phone','whtRate','bank','accountNo','accountName','active','note'].forEach(k => row[k] = g(k));
+  await busy(async()=>{ await batch([{table:'Brokers',rows:[row]}]); closeModal(); toast('บันทึกข้อมูลนายหน้าแล้ว'); render(); });
+}
+
+/* ========= ประวัติ ========= */
+function pgLog(){
+  return head('ประวัติการแก้ไข','300 รายการล่าสุด') + `<div class="card"><div class="tw"><table class="tbl sm"><thead><tr><th>เวลา</th><th>ผู้ใช้</th><th>การกระทำ</th><th>รายละเอียด</th></tr></thead><tbody>
+  ${(S.db.Log||[]).map(l=>`<tr><td style="white-space:nowrap">${esc(l.ts)}</td><td>${esc(l.user)}</td><td>${esc(l.action)}</td><td class="muted">${esc(l.detail)}</td></tr>`).join('') || '<tr><td colspan="4" class="empty">ไม่มีข้อมูล (โหมดทดลองไม่บันทึกประวัติ)</td></tr>'}
+  </tbody></table></div></div>`;
+}
+
+/* ========= เริ่มต้น ========= */
+(async function init(){
+  $('#companyName').textContent = CONFIG.COMPANY; $('#brandCo').textContent = CONFIG.COMPANY;
+  $('#lName').value = localStorage.getItem('commName') || '';
+  if (DEMO) $('#demoNote').innerHTML = 'โหมดทดลอง: ยังไม่ได้เชื่อม Google Sheets ข้อมูลเก็บในเบราว์เซอร์เครื่องนี้เท่านั้น ใส่ชื่อและรหัสผ่านอะไรก็ได้';
+  else $('#demoNote').remove();
+  $('#lPw').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+  const s = JSON.parse(sessionStorage.getItem('commSess') || 'null');
+  if (s){ S.token = s.token; S.user = s.user; const ok = await busy(async()=>{ await reload(); return true; }); if (ok) showApp(); }
+})();
+</script>
+</body>
+</html>
