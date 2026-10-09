@@ -160,7 +160,7 @@ let IMP = null;
 
 /* ========= ตัวช่วย ========= */
 const $ = s => document.querySelector(s);
-const $ = s => [...document.querySelectorAll(s)];
+const $$ = s => [...document.querySelectorAll(s)];
 const num = v => { const n = parseFloat(String(v ?? '').replace(/[, ]/g,'')); return isNaN(n) ? 0 : n; };
 const r2 = n => Math.round((n + Number.EPSILON) * 100) / 100;
 const money = n => num(n).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
